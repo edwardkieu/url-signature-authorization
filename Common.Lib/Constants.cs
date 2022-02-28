@@ -10,7 +10,7 @@
 
         public static class QueryString
         {
-            public const string CLIENT_ID = "clientId";
+            public const string SERVICE_NAME = "serviceName";
             public const string EXPIRED_TIME = "expiredTime";
             public const string SIGNATURE = "signature";
         }

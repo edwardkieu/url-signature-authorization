@@ -36,7 +36,7 @@ namespace Common.Lib.Services
             var queryString = new NameValueCollection
             {
                 HttpUtility.ParseQueryString(uri.Query),
-                { Constants.QueryString.CLIENT_ID, ApiService.ApiClientKey.ClientId },
+                { Constants.QueryString.SERVICE_NAME, ApiService.Name },
                 { Constants.QueryString.EXPIRED_TIME, signatureExpiredTime.ToString(Constants.SignatureConfiguration.SIGNATURE_EXPIRED_TIME_FORMAT, CultureInfo.InvariantCulture) }
             };
             var uriPath = uri.GetLeftPart(UriPartial.Path);
@@ -77,13 +77,6 @@ namespace Common.Lib.Services
         private bool HasValidSignature(HttpContext httpContext)
         {
             var signatureOrigin = httpContext.Request.Query[Constants.QueryString.SIGNATURE];
-            var clientId = httpContext.Request.Query[Constants.QueryString.CLIENT_ID];
-            if (string.IsNullOrWhiteSpace(clientId))
-                throw new UnAuthorizedException("INVALID_URL_SIGNATURE_ACCESSKEY");
-
-            if (ApiService == null)
-                throw new UnAuthorizedException("INVALID_URL_SIGNATURE_SECRETKEY");
-
             var supportProtocols = new List<string> { "http", "https" };
             var uri = new Uri(httpContext.Request.GetDisplayUrl());
             var queryString = new NameValueCollection
