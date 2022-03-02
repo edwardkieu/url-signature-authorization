@@ -78,23 +78,21 @@ namespace Common.Lib.Services
         {
             var signatureOrigin = httpContext.Request.Query[Constants.QueryString.SIGNATURE];
             var supportProtocols = new List<string> { "http", "https" };
-            var uri = new Uri(httpContext.Request.GetDisplayUrl());
-            var queryString = new NameValueCollection
-            {
-                HttpUtility.ParseQueryString(uri.Query)
-            };
-
+            var urlWithoutSignature = StringHelper.RemoveQueryStrings(httpContext.Request.GetDisplayUrl(), new string[] { Constants.QueryString.SIGNATURE });
+            var uriWithoutSignature = new Uri(urlWithoutSignature);
             var hasValidSignature = false;
 
             foreach (var protocol in supportProtocols)
             {
-                var url = uri.IsDefaultPort
-                             ? string.Format("{0}://{1}{2}", protocol, uri.Host, uri.AbsolutePath)
-                             : string.Format("{0}://{1}{2}", protocol, uri.Authority, uri.AbsolutePath);
 
-                var urlWithoutSignature = StringHelper.RemoveQueryStrings(string.Format("{0}{1}", url, StringHelper.ConvertNameValueCollectionToQueryString(queryString)), new string[] { Constants.QueryString.SIGNATURE });
+                var urlNeedToVerify = uriWithoutSignature.IsDefaultPort
+                             ? string.Format("{0}://{1}{2}", protocol, uriWithoutSignature.Host, uriWithoutSignature.AbsolutePath)
+                             : string.Format("{0}://{1}{2}", protocol, uriWithoutSignature.Authority, uriWithoutSignature.AbsolutePath);
 
-                var signature = StringHelper.GenerateSignature(System.Net.WebUtility.UrlDecode(urlWithoutSignature), ApiService.ApiClientKey.ClientSecret);
+                urlNeedToVerify += uriWithoutSignature.Query;
+
+                var signature = StringHelper.GenerateSignature(System.Net.WebUtility.UrlDecode(urlNeedToVerify), ApiService.ApiClientKey.ClientSecret);
+
                 hasValidSignature = signature.Equals(signatureOrigin);
 
                 if (hasValidSignature)
