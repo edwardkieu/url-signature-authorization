@@ -5,11 +5,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Globalization;
 using System.Linq;
-using System.Threading.Tasks;
-using System.Web;
 
 namespace Common.Lib.Services
 {
@@ -33,21 +30,20 @@ namespace Common.Lib.Services
         public string CreateUrlSignature(string originalUrl)
         {
             var signatureExpiredTime = DateTimeOffset.UtcNow.AddMinutes(Constants.SignatureConfiguration.SIGNATURE_EXPIRED_IN_MINUTES);
-            
+
             var originUri = new Uri(originalUrl);
-            
+
             var queryDictionary = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(originUri.Query);
             queryDictionary.Add(Constants.QueryString.SERVICE_NAME, ApiService.Name);
             queryDictionary.Add(Constants.QueryString.EXPIRED_TIME, signatureExpiredTime.ToString(Constants.SignatureConfiguration.SIGNATURE_EXPIRED_TIME_FORMAT, CultureInfo.InvariantCulture));
-            
+
             var uriPath = originUri.GetLeftPart(UriPartial.Path);
-            
+
             var urlWithoutSignature = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(uriPath, queryDictionary.ToDictionary(k => k.Key, k => k.Value.ToString()));
 
             var signature = StringHelper.GenerateSignature(System.Net.WebUtility.UrlDecode(urlWithoutSignature), ApiService.ApiClientKey.ClientSecret);
 
             queryDictionary.Add(Constants.QueryString.SIGNATURE, signature);
-
 
             var urlIncludeSignalture = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(uriPath, queryDictionary.ToDictionary(k => k.Key, k => k.Value.ToString()));
 
@@ -86,11 +82,11 @@ namespace Common.Lib.Services
             var supportProtocols = new List<string> { "http", "https" };
 
             var originUri = new Uri(httpContext.Request.GetDisplayUrl());
-            
+
             var queryDictionary = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(originUri.Query);
 
             queryDictionary.Remove(Constants.QueryString.SIGNATURE);
-            
+
             var urlWithoutSignature = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(originUri.GetLeftPart(UriPartial.Path), queryDictionary.ToDictionary(k => k.Key, k => k.Value.ToString()));
 
             var uriWithoutSignature = new Uri(urlWithoutSignature);
@@ -99,12 +95,11 @@ namespace Common.Lib.Services
 
             foreach (var protocol in supportProtocols)
             {
-
                 var urlNeedToVerify = uriWithoutSignature.IsDefaultPort
                             ? string.Format("{0}://{1}{2}", protocol, uriWithoutSignature.Host, uriWithoutSignature.AbsolutePath)
                             : string.Format("{0}://{1}{2}", protocol, uriWithoutSignature.Authority, uriWithoutSignature.AbsolutePath);
                 urlNeedToVerify += uriWithoutSignature.Query;
-                
+
                 var signature = StringHelper.GenerateSignature(System.Net.WebUtility.UrlDecode(urlNeedToVerify), ApiService.ApiClientKey.ClientSecret);
 
                 hasValidSignature = signature.Equals(signatureOrigin);
