@@ -29,7 +29,7 @@ namespace Common.Lib.Services
 
         public string CreateUrlSignature(string originalUrl)
         {
-            var signatureExpiredTime = DateTimeOffset.UtcNow.AddMinutes(Constants.SignatureConfiguration.SIGNATURE_EXPIRED_IN_MINUTES);
+            var signatureExpiredTime = DateTimeOffset.UtcNow;
 
             var originUri = new Uri(originalUrl);
 
